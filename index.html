@@ -1,0 +1,2273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muslimische Schule - Dashboard</title>
+
+  <!-- ✅ Supabase UMD build (defines window.supabase) -->
+<script>
+  // 🔧 HIER einfügen:
+  window.SUPABASE_URL = "https://yiwcxajfxrkqpeikhwtl.supabase.co";
+  window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpd2N4YWpmeHJrcXBlaWtod3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ3NDU3NzcsImV4cCI6MjA4MDMyMTc3N30.2opICt6xJgJ0d4OUNFE0KpMfp2lXeetpcwnhT8qUJzI";
+
+  // wird erst aufgerufen, wenn die Bibliothek wirklich geladen ist
+  window.initSupabase = function () {
+    if (!window.supabase) {
+      alert("Supabase Script wurde NICHT geladen. Prüfe Internet/CDN oder öffne die Seite über http://localhost (nicht file://).");
+      return;
+    }
+    window.client = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+    console.log("✅ Supabase client bereit");
+  };
+</script>
+
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"
+  onload="initSupabase()"
+  onerror="alert('Supabase CDN konnte nicht geladen werden (Internet/CDN blockiert).')"
+></script>
+
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: #f5f5f5; color: #333; font-size: 19px; }
+    button { cursor: pointer; font-size: 16px; }
+    a { text-decoration: none; color: inherit; }
+
+    /* LOGIN */
+    .login-container { display:flex; justify-content:center; align-items:center; min-height:100vh; gap:70px; padding:20px; flex-wrap:wrap; }
+    .login-form { background:#fff; padding:70px; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,0.12); width:520px; max-width:95vw; }
+    .login-form h2 { text-align:center; margin-bottom:40px; color:#2e7d32; font-size:38px; }
+    .login-form label { display:block; margin-bottom:10px; font-weight:bold; font-size:20px; }
+    .login-form input { width:100%; padding:18px; margin-bottom:26px; border-radius:8px; border:1px solid #bbb; font-size:18px; }
+    .login-form button { width:100%; padding:18px; background:#2e7d32; color:#fff; border:none; border-radius:8px; font-size:22px; transition:.25s; }
+    .login-form button:hover { background:#1b5e20; }
+    .login-image img { max-width:650px; width:100%; border-radius:14px; box-shadow:0 6px 15px rgba(0,0,0,0.1); }
+    #connStatus { margin-top:12px; font-size:14px; color:#555; }
+
+    /* DASHBOARD */
+    .dashboard { display:none; min-height:100vh; }
+    .header { background:#2e7d32; color:#fff; padding:20px 60px; display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #1b5e20; gap:18px; flex-wrap:wrap; }
+    .logo img { height:88px; }
+    .nav { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+    .nav button { background:transparent; border:none; color:#fff; font-size:20px; padding:10px 15px; border-radius:6px; transition:.2s; }
+    .nav button:hover { background:#1b5e20; }
+    .nav button.active { background:rgba(0,0,0,0.18); }
+
+    .content { padding:40px 60px; max-width:1400px; margin:0 auto; }
+    h2 { margin-bottom:25px; color:#2e7d32; font-size:28px; }
+
+  
+    .hl { background: yellow; padding: 0 2px; border-radius: 2px; }
+
+    /* Such-Animation (wie bei dir) */
+    .search-container { position: relative; display:flex; align-items:center; height:42px; }
+    .search-container input {
+      width:0; opacity:0; padding:10px 0;
+      border:1px solid #ccc; border-radius:20px; outline:none; background:#fff;
+      transition: width .35s ease, opacity .35s ease, padding .35s ease;
+    }
+    .search-container.active input { width:240px; opacity:1; padding:10px 14px; }
+    .search-icon { cursor:pointer; background:transparent; border:none; color:#fff; padding:8px 10px; border-radius:8px; }
+    /* FILTER */
+    .filter { display:flex; align-items:center; gap:12px; margin:15px 0; padding:12px 16px; background:#f4f6f9; border:1px solid #d0d5dd; border-radius:10px; font-size:16px; flex-wrap:wrap; }
+    .filter label { font-weight:600; color:#333; }
+    .filter select, .filter input { padding:8px 12px; font-size:15px; border:1px solid #b8bfc9; border-radius:8px; background:#fff; }
+
+    /* TABLES */
+    .table-wrap { width:100%; overflow-x:auto; border-radius:12px; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 6px 15px rgba(0,0,0,0.05); font-size:17px; min-width:1000px; }
+    table th, table td { padding:14px; border-bottom:1px solid #ddd; text-align:left; }
+    table th { background:#e8f5e9; color:#2e7d32; font-size:17px; }
+    table tr:hover { background:#f1f1f1; }
+
+    .btn { background:#2e7d32; color:#fff; border:none; padding:12px 18px; border-radius:6px; margin-top:12px; font-size:17px; }
+    .btn:hover { background:#1b5e20; }
+    .mini-btn { background:#e8f5e9; border:1px solid #cfe8d0; padding:7px 10px; border-radius:8px; font-weight:bold; }
+    .mini-btn:hover { background:#dff1e0; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fafafa; }
+    .edited-badge { margin-left:6px; }
+
+    /* MODAL */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:2000; padding:14px; }
+    .modal-content { background:#fff; padding:40px 45px; border-radius:15px; width:600px; max-width:95vw; max-height:90vh; overflow-y:auto; font-size:18px; box-shadow:0 8px 20px rgba(0,0,0,0.3); }
+    .modal-content input, .modal-content select { font-size:17px; padding:10px 12px; margin-top:5px; margin-bottom:15px; width:100%; border-radius:6px; border:1px solid #ccc; }
+    .modal-content .btn { font-size:16px; padding:10px 18px; border-radius:8px; }
+
+    /* FINANCE FORM */
+    .finance-form { display:flex; flex-wrap:wrap; gap:10px; background:#f2f2f2; padding:15px; border-radius:12px; align-items:center; max-width:900px; margin-bottom:20px; }
+    .finance-form input, .finance-form select { padding:10px; font-size:16px; border-radius:8px; border:1px solid #ccc; flex:1 1 170px; }
+    .finance-form button { background:#4CAF50; color:#fff; border:none; font-weight:bold; padding:10px 20px; border-radius:8px; cursor:pointer; flex:1 1 140px; }
+    .finance-form button:hover { background:#45a049; }
+
+    .calendar-title { font-size: 26px; margin-bottom: 10px; color: #222; }
+    .year-navigation { display:flex; align-items:center; justify-content:center; gap:20px; margin-bottom:20px; }
+    .year-display { font-size:22px; font-weight:bold; color:#0078d7; min-width:80px; text-align:center; }
+    .year-btn { background:#0078d7; color:white; border:none; border-radius:50%; width:40px; height:40px; font-size:22px; cursor:pointer; transition:.2s; }
+    .year-btn:hover { background:#005fa3; transform:scale(1.05); }
+
+    .calendar-year { display:flex; flex-wrap:wrap; justify-content:center; gap:25px; }
+    .month { width:260px; border:1px solid #ccc; border-radius:12px; padding:10px; text-align:center; background:white; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    .month h3 { margin-bottom:8px; }
+    .calendar-grid { display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; }
+    .day { padding:6px; border-radius:6px; background:#f8f8f8; min-height:40px; position:relative; cursor:pointer; font-size:14px; }
+    .day-name { font-weight:bold; background:#ddd; border-radius:4px; }
+    .sunday { color:red; }
+    .holiday { background:#ffb3b3; color:#900; font-weight:bold; }
+    .noteday { background:#c4f3c2 !important; color:#084c08; font-weight:bold; }
+    .note-preview { font-size:11px; display:block; margin-top:2px; color:#333; }
+    .today { background:yellow !important; color:black !important; font-weight:bold; border:2px solid orange; }
+
+    /* ======= GRÜNE CHECKBOX ======= */
+input[type="checkbox"]{
+  accent-color: #2e7d32;   /* dein Grün */
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+input[type="checkbox"]:checked{
+  filter: drop-shadow(0 0 2px rgba(46,125,50,0.6));
+}
+
+
+/* ======= RESPONSIVE ======= */
+@media (max-width: 900px){
+  body{ font-size: 17px; }
+  h2{ font-size: 26px; }
+  .logo img{ height: 70px; }
+  .nav button{ font-size: 16px; padding: 8px 10px; }
+  table thead th{ top: 78px; }   /* sticky offset kleiner */
+}
+
+@media (max-width: 600px){
+  .header{ padding: 12px 12px; }
+  .content{ padding: 16px 12px; }
+  .login-form{ padding: 40px; }
+}
+
+  </style>
+</head>
+
+<body>
+  <!-- LOGIN -->
+  <div class="login-container">
+    <div class="login-form">
+      <h2>Login</h2>
+      <label for="username">Benutzername</label>
+      <input type="text" id="username" placeholder="Benutzername">
+      <label for="password">Passwort</label>
+      <input type="password" id="password" placeholder="Passwort">
+      <button id="loginBtn">Anmelden</button>
+      <p style="margin-top: 12px; font-size: 15px;">
+        Demo-Zugang:<br> Benutzer: Hussin.Albalkhi <br> Passwort: H.Ahlen
+      </p>
+      <p id="connStatus"></p>
+    </div>
+    <div class="login-image">
+      <img src="C:\xampp\htdocs\school-system\assests\images\Blue.avif" alt="Moschee">
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+    <div class="header">
+      <div class="logo"><img src="C:\xampp\htdocs\school-system\assests\images\Ahlen.jpg" alt="Logo"></div>
+
+      <div class="nav">
+        <button class="navbtn active" data-target="students">Schüler</button>
+        <button class="navbtn" data-target="teachers">Lehrer</button>
+        <button class="navbtn" data-target="classes">Klassen</button>
+        <button class="navbtn" data-target="finance">Finanzen</button>
+        <button onclick="showSection('calendar')">Kalender</button>
+        <button class="navbtn" data-target="contact">Kontakt</button>
+
+        <div class="search-container" id="searchContainer">
+          <input type="text" id="searchBox" placeholder="Suche..." />
+          <button class="search-icon" id="searchToggle" type="button">Suche</button>
+        </div>
+
+        <button id="printBtn" type="button">Drucken</button>
+        <button id="langToggleBtn" type="button" style="margin-left:6px;">العربية</button>
+
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- STUDENTS -->
+      <div id="students" class="section">
+        <h2>Schülerverwaltung</h2>
+        <button class="btn" id="addStudentBtn" type="button">+ Schüler hinzufügen</button>
+
+        <div class="filter">
+          <label>Filter:</label>
+          <select id="studentPaymentFilter">
+            <option value="all">Alle</option>
+            <option value="paid">Bezahlt</option>
+            <option value="unpaid">Nicht bezahlt</option>
+          </select>
+          <select id="studentClassFilter">
+            <option value="all">Alle Klassen</option>
+          </select>
+          <button class="mini-btn" id="resetStudentFilterBtn" type="button">Zurücksetzen</button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="student-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Klasse</th><th>Name</th><th>Eltern Name</th><th>Geburtsdatum</th><th>Eingefügt</th>
+                <th>Kontakt / Anschrift</th><th>H1</th><th>H2</th><th>Bezahlung</th><th>Aktionen</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+              <tr>
+                <td colspan="9" style="text-align:right; font-weight:bold;">Summe Einnahmen:</td>
+                <td id="totalPayment">0 €</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- TEACHERS -->
+      <div id="teachers" class="section" style="display:none;">
+        <h2>Lehrerverwaltung</h2>
+        <button class="btn" id="addTeacherBtn" type="button">+ Lehrer hinzufügen</button>
+
+        <div class="filter">
+          <label>Filter Klasse:</label>
+          <select id="teacherClassFilter"><option value="all">Alle Klassen</option></select>
+        </div>
+
+        <div class="table-wrap">
+          <table id="teacher-table">
+            <thead>
+              <tr><th>Name</th><th>Klasse(n)</th><th>Education</th><th>Telefon</th><th>E-Mail</th><th>Aktionen</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CLASSES -->
+      <div id="classes" class="section" style="display:none;">
+        <h2>Klassen</h2>
+
+        <div class="filter">
+          <label>Neue Klasse:</label>
+          <input id="newClassName" placeholder="z.B. Klasse A" />
+          <button class="btn" id="addClassBtn" type="button">Hinzufügen</button>
+        </div>
+
+        <div class="filter">
+          <label>Klasse auswählen:</label>
+          <select id="classSelect"><option value="">Bitte wählen</option></select>
+          <button class="mini-btn" id="showClassStudentsBtn" type="button">Schüler anzeigen</button>
+          <button class="mini-btn" id="deleteClassBtn" type="button">Klasse löschen</button>
+        </div>
+
+        <div id="classInfo" style="margin-top:10px; color:#555;"></div>
+
+        <div class="table-wrap">
+          <table id="class-student-table">
+            <thead><tr><th>ID</th><th>Klasse</th><th>Name</th><th>Eltern</th><th>Bezahlung</th><th>Aktion</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FINANCE -->
+      <div id="finance" class="section" style="display:none;">
+        <h2>Finanzen</h2>
+
+        <div class="filter">
+          <label>Filter:</label>
+          <select id="financeFilter">
+            <option value="all">Alle</option>
+            <option value="income">Einnahmen</option>
+            <option value="expense">Ausgaben</option>
+            <option value="student">Nur Schüler</option>
+            <option value="manual">Nur Manuell</option>
+          </select>
+        </div>
+
+        <div class="finance-form">
+          <input type="date" id="financeDate" />
+          <input type="text" id="financeDesc" placeholder="Grund / Beschreibung" />
+          <input type="number" id="financeAmount" placeholder="Betrag" step="0.01" min="0" />
+          <select id="financeType">
+            <option value="income">Einnahme</option>
+            <option value="expense">Ausgabe</option>
+          </select>
+          <button id="financeAddBtn" type="button">Hinzufügen</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Datum</th><th>Quelle</th><th>Grund / Beschreibung</th><th>Betrag</th><th>Typ</th><th>Aktionen</th></tr></thead>
+            <tbody id="financeTableBody"></tbody>
+            <tfoot>
+             <tr>
+  <td colspan="3"><strong id="financeSumIncomeLabel">Summe</strong></td>
+  <td id="financeIncome">0 €</td>
+  <td id="financeIncomeLabel">Einnahmen</td>
+  <td></td>
+</tr>
+
+<tr>
+  <td colspan="3"><strong id="financeSumExpenseLabel">Summe</strong></td>
+  <td id="financeExpenses">0 €</td>
+  <td id="financeExpensesLabel">Ausgaben</td>
+  <td></td>
+</tr>
+
+<tr>
+  <td colspan="3"><strong id="financeBalanceLabel">Saldo</strong></td>
+  <td id="financeBalance">0 €</td>
+  <td id="financeBalanceSideLabel"></td>
+  <td></td>
+</tr>
+
+
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    <!-- Calender -->
+<div id="calendar" class="section" style="display:none;">
+  <h2 class="calendar-title">Schulferien-Kalender NRW</h2>
+
+  <div class="year-navigation">
+    <button class="year-btn" onclick="changeYear(-1)">&#8592;</button>
+    <span id="currentYear" class="year-display"></span>
+    <button class="year-btn" onclick="changeYear(1)">&#8594;</button>
+  </div>
+
+  <div id="calendarYear" class="calendar-year"></div>
+</div>
+
+      <!-- CONTACT -->
+      <div id="contact" class="section" style="display:none;">
+        <h2>Kontakt</h2>
+        <form id="contactForm" action="https://formsubmit.co/albalkhi.sy@gmail.com" method="POST">
+          <input type="hidden" name="_subject" value="Kontaktformular – Muslimische Schule">
+          <input type="hidden" name="_captcha" value="false">
+
+          <div class="filter" style="gap:16px;">
+            <div style="flex:1 1 260px;">
+              <label style="display:block; margin-bottom:8px;">Name</label>
+              <input type="text" name="name" required placeholder="Dein Name"
+                     oninput="this.value=this.value.replace(/[^a-zA-ZäöüÄÖÜß\s-]/g,'')">
+            </div>
+            <div style="flex:1 1 260px;">
+              <label style="display:block; margin-bottom:8px;">E-Mail</label>
+              <input type="email" name="email" required placeholder="beispiel@mail.de">
+            </div>
+          </div>
+
+          <div style="margin-top:12px;">
+            <label style="display:block; margin-bottom:8px; font-weight:600;">Nachricht</label>
+            <textarea name="message" required rows="7"
+              style="width:100%; padding:14px; border-radius:8px; border:1px solid #ccc;"></textarea>
+          </div>
+
+          <button type="submit" class="btn">Senden</button>
+        </form>
+      </div>
+
+      <div id="debugBox" style="display:none; margin-top:18px; padding:12px 14px; background:#fff3cd; border:1px solid #ffeeba; border-radius:10px; color:#6c5700;"></div>
+    </div>
+  </div>
+
+  <!-- STUDENT MODAL -->
+  <div class="modal" id="studentModal">
+    <div class="modal-content">
+      <h3 id="studentModalTitle">Schüler hinzufügen</h3>
+      <input type="hidden" id="studentId" />
+
+      <label>Schülername</label>
+      <input type="text" id="studentName" placeholder="Max Mustermann"
+        oninput="this.value = sanitizeName(this.value)">
+
+      <label>Elternname</label>
+      <input type="text" id="parentName" placeholder="Eltern Mustermann"
+        oninput="this.value = sanitizeName(this.value)">
+
+
+      <label>Klasse</label>
+      <select id="studentClassSelect"></select>
+
+      <label>Geburtsdatum</label>
+      <input type="date" id="studentBirth" />
+
+      <label>Straße & Hausnummer</label>
+      <input type="text" id="studentStreet" />
+
+      <label>PLZ</label>
+      <input type="text" id="studentPLZ" placeholder="PLZ (5 Zahlen)"
+        inputmode="numeric" maxlength="5"
+        oninput="this.value = sanitizePLZ(this.value)">
+
+
+      <label>Telefon</label>
+      <input type="text" id="studentPhone" placeholder="Telefon (nur Zahlen)"
+        inputmode="numeric" maxlength="15"
+        oninput="this.value = sanitizePhone(this.value)">
+
+
+      <label>E-Mail</label>
+      <input type="email" id="studentEmail" placeholder="email@beispiel.de"
+        oninput="this.value = sanitizeEmail(this.value)">
+
+
+      <div style="display:flex; gap:16px; margin-top:6px; margin-bottom:10px;">
+        <label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="studentH1"> Halbjahr 1</label>
+        <label style="display:flex; align-items:center; gap:10px;"><input type="checkbox" id="studentH2"> Halbjahr 2</label>
+        
+      </div>
+
+      <label>Bezahlung (€)</label>
+      <input type="number" id="studentPayment" min="0" step="0.01" />
+
+      <button class="btn" id="studentSaveBtn" type="button">Speichern</button>
+      <button class="btn" style="background:#ccc;color:#333;margin-top:10px;" id="studentCancelBtn" type="button">Abbrechen</button>
+    </div>
+  </div>
+
+  <!-- TEACHER MODAL -->
+  <div class="modal" id="teacherModal">
+    <div class="modal-content">
+      <h3 id="teacherModalTitle">Lehrer hinzufügen</h3>
+      <input type="hidden" id="teacherId" />
+
+      <label>Lehrername</label>
+      <input type="text" id="teacherName" />
+
+      <label>Klasse(n)</label>
+      <select id="teacherClassesSelect" multiple size="6" style="height:auto;"></select>
+      <div style="font-size:13px; color:#666; margin-top:-6px; margin-bottom:10px;">(Mehrfachauswahl: Strg/Cmd klicken)</div>
+
+      <label>Education / Qualifikation</label>
+      <input type="text" id="teacherEdu" />
+
+      <label>Telefon</label>
+      <input type="text" id="teacherPhone" inputmode="numeric"
+             oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,15)" />
+
+      <label>E-Mail</label>
+      <input type="email" id="teacherEmail" />
+
+      <button class="btn" id="teacherSaveBtn" type="button">Speichern</button>
+      <button class="btn" style="background:#ccc;color:#333;margin-top:10px;" id="teacherCancelBtn" type="button">Abbrechen</button>
+    </div>
+  </div>
+
+  <!-- FINANCE EDIT MODAL -->
+  <div class="modal" id="financeEditModal">
+    <div class="modal-content">
+      <h3>Eintrag bearbeiten</h3>
+      <input type="hidden" id="financeEditSource" />
+      <input type="hidden" id="financeEditId" />
+
+      <label>Datum</label>
+      <input type="date" id="financeEditDate" />
+
+      <label>Grund / Beschreibung</label>
+      <input type="text" id="financeEditDesc" />
+
+      <label>Betrag (€)</label>
+      <input type="number" id="financeEditAmount" step="0.01" min="0" />
+
+      <label>Typ</label>
+      <select id="financeEditType">
+        <option value="income">Einnahme</option>
+        <option value="expense">Ausgabe</option>
+      </select>
+
+      <button class="btn" id="financeEditSaveBtn" type="button">Speichern</button>
+      <button class="btn" style="background:#ccc;color:#333;margin-top:10px;" id="financeEditCancelBtn" type="button">Abbrechen</button>
+    </div>
+  </div>
+
+  <script>
+
+    let currentUser = null;
+    let currentSectionId = "students";
+
+    function showDebug(msg){
+      const box = document.getElementById("debugBox");
+      box.style.display = "block";
+      box.innerHTML = msg;
+    }
+
+    function getEditedMap(){ return JSON.parse(localStorage.getItem("editedMap") || "{}"); }
+    function markEdited(scope, id){ const m=getEditedMap(); m[scope+":"+id]=true; localStorage.setItem("editedMap", JSON.stringify(m)); }
+    function isEdited(scope, id){ const m=getEditedMap(); return !!m[scope+":"+id]; }
+    function editedBadge(scope, id){ return isEdited(scope,id) ? '<span class="edited-badge" title="Bearbeitet">✏️</span>' : ''; }
+
+    function escapeHtml(str){ return (str||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+    function toISO(d){ return (d instanceof Date) ? d.toISOString().split("T")[0] : (d || ""); }
+    function formatEuro(n){ return (Number(n)||0).toFixed(2) + " €"; }
+    function normalizeType(v){ if (v==="income"||v==="Einnahme") return "Einnahme"; if (v==="expense"||v==="Ausgabe") return "Ausgabe"; return "Einnahme"; }
+    function uiType(v){ return normalizeType(v)==="Ausgabe" ? "expense" : "income"; }
+    function createdAtToDate(s){ return s ? String(s).slice(0,10) : "-"; }
+
+  function showSection(id){
+  document.querySelectorAll(".section").forEach(sec => sec.style.display="none");
+  document.getElementById(id).style.display="block";
+  currentSectionId = id;
+
+  document.querySelectorAll(".navbtn").forEach(b =>
+    b.classList.toggle("active", b.dataset.target === id)
+  );
+
+  document.getElementById("searchBox").value = "";
+  clearHighlights(document.getElementById(id));
+  resetSectionRows(id);
+
+  if (id==="classes") loadClassesUI();
+  if (id==="finance") renderFinance();
+
+  // ✅ HIER rein (ganz am Ende in showSection):
+  if (id === "calendar") {
+    currentYear = new Date().getFullYear();
+    generateYearCalendar(currentYear);
+  }
+}
+
+// Datenintegrität:
+// ✅ erlaubt: Deutsch/Latin + Arabisch + Leerzeichen
+function sanitizeName(v){
+  return (v || "").replace(/[^a-zA-ZäöüÄÖÜß\u0600-\u06FF\s]/g, "");
+}
+
+function sanitizePLZ(v){
+  return (v || "").replace(/[^0-9]/g, "").slice(0, 5);
+}
+
+function sanitizePhone(v){
+  return (v || "").replace(/[^0-9]/g, "").slice(0, 15);
+}
+
+function sanitizeEmail(v){
+  return (v || "").trim().replace(/\s+/g, "");
+}
+
+function isValidEmail(v){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || "").trim());
+}
+
+function isValidPLZ(v){
+  return /^\d{5}$/.test(String(v || "").trim());
+}
+
+function isValidPhone(v){
+  const s = String(v || "").trim();
+  return s.length >= 6 && /^\d+$/.test(s); // min 6 Zahlen (kannst du ändern)
+}
+
+function isValidName(v){
+  return /^[a-zA-ZäöüÄÖÜß\u0600-\u06FF\s]+$/.test(String(v || "").trim());
+}
+
+
+    function clearHighlights(root){
+      if (!root) return;
+      root.querySelectorAll(".hl").forEach(span => span.replaceWith(document.createTextNode(span.textContent)));
+    }
+    function resetSectionRows(sectionId){
+      const sec = document.getElementById(sectionId);
+      if (!sec) return;
+      sec.querySelectorAll("tbody tr").forEach(r => r.style.display="");
+    }
+    function highlightTextInRow(rowEl, query){
+  const q = (query || "").trim();
+  if (!q) return 0;
+
+  const qLower = q.toLowerCase();
+  let hits = 0;
+
+  rowEl.querySelectorAll("td").forEach(td => {
+    // alte Markierungen weg
+    clearHighlights(td);
+
+    const text0 = td.textContent;           // ✅ nur reiner Text
+    const lower = text0.toLowerCase();
+
+    if (!lower.includes(qLower)) return;
+
+    // ✅ markiert den KOMPLETTEN Suchtext (auch mehrere Wörter)
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(escaped, "gi");
+
+    td.innerHTML = text0.replace(re, (m) => {
+      hits++;
+      return `<span class="hl">${m}</span>`;
+    });
+  });
+
+  return hits;
+}
+let currentYear = new Date().getFullYear();
+let notes = JSON.parse(localStorage.getItem("calendarNotes") || "{}");
+
+// NRW Ferientermine (2025–2030) – wie du es vorher hattest
+const ferienByYear = {
+  2025: [
+    { start: '2025-07-14', end: '2025-08-26' },
+    { start: '2025-10-13', end: '2025-10-25' },
+    { start: '2025-12-22', end: '2026-01-06' }
+  ],
+  2026: [
+    { start: '2026-03-30', end: '2026-04-11' },
+    { start: '2026-05-26', end: '2026-05-26' },
+    { start: '2026-07-20', end: '2026-09-01' },
+    { start: '2026-10-17', end: '2026-10-31' },
+    { start: '2026-12-23', end: '2027-01-06' }
+  ],
+  2027: [
+    { start: '2027-03-22', end: '2027-04-03' },
+    { start: '2027-05-18', end: '2027-05-18' },
+    { start: '2027-07-19', end: '2027-08-31' },
+    { start: '2027-10-23', end: '2027-11-06' },
+    { start: '2027-12-24', end: '2028-01-08' }
+  ],
+  2028: [
+    { start: '2028-04-10', end: '2028-04-22' },
+    { start: '2028-07-10', end: '2028-08-22' },
+    { start: '2028-10-23', end: '2028-11-04' },
+    { start: '2028-12-21', end: '2029-01-05' }
+  ],
+  2029: [
+    { start: '2029-03-26', end: '2029-04-07' },
+    { start: '2029-05-22', end: '2029-05-22' },
+    { start: '2029-07-02', end: '2029-08-14' },
+    { start: '2029-10-15', end: '2029-10-27' },
+    { start: '2029-12-20', end: '2030-01-04' }
+  ],
+  2030: [
+    { start: '2030-04-15', end: '2030-04-27' },
+    { start: '2030-06-24', end: '2030-08-06' },
+    { start: '2030-10-14', end: '2030-10-26' },
+    { start: '2030-12-23', end: '2031-01-06' }
+  ]
+};
+
+function isHoliday(dateStr) {
+  const d = new Date(dateStr);
+  const y = d.getFullYear();
+  const years = [y - 1, y, y + 1];
+
+  return years.some(yy => {
+    const ranges = ferienByYear[yy] || [];
+    return ranges.some(f => {
+      const s = new Date(f.start);
+      const e = new Date(f.end);
+      return d >= s && d <= e;
+    });
+  });
+}
+
+function generateYearCalendar(year) {
+  const container = document.getElementById("calendarYear");
+  if (!container) return;
+
+  container.innerHTML = "";
+  const yearEl = document.getElementById("currentYear");
+  if (yearEl) yearEl.textContent = year;
+
+  const todayStr = new Date().toISOString().split("T")[0];
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+
+  for (let month = 0; month < 12; month++) {
+    const monthDiv = document.createElement("div");
+    monthDiv.className = "month";
+
+    const title = document.createElement("h3");
+    title.textContent = `${monthNames[month]} ${year}`;
+    monthDiv.appendChild(title);
+
+    const grid = document.createElement("div");
+    grid.className = "calendar-grid";
+
+    ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(n => {
+      const dn = document.createElement("div");
+      dn.className = "day-name";
+      dn.textContent = n;
+      grid.appendChild(dn);
+    });
+
+    const firstDay = new Date(year, month, 1);
+    const startDay = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    for (let i=0; i<startDay; i++) grid.appendChild(document.createElement("div"));
+
+    for (let day=1; day<=daysInMonth; day++) {
+      const dayDiv = document.createElement("div");
+      dayDiv.className = "day";
+
+      const dateStr = `${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+
+      // Farben/Markierungen
+      if (isHoliday(dateStr)) dayDiv.classList.add("holiday");
+      if (new Date(year, month, day).getDay() === 0) dayDiv.classList.add("sunday");
+      if (dateStr === todayStr) dayDiv.classList.add("today");
+
+      // Notiz-Preview
+      if (notes[dateStr]) {
+        dayDiv.classList.add("noteday");
+        const preview = document.createElement("span");
+        preview.className = "note-preview";
+        preview.textContent = notes[dateStr].slice(0, 12) + (notes[dateStr].length > 12 ? "..." : "");
+        dayDiv.appendChild(preview);
+      }
+
+      // Zahl setzen (danach, damit Preview sichtbar bleibt)
+      const num = document.createElement("div");
+      num.textContent = day;
+      dayDiv.prepend(num);
+
+      dayDiv.addEventListener("click", () => addOrShowNote(dateStr));
+      grid.appendChild(dayDiv);
+    }
+
+    monthDiv.appendChild(grid);
+    container.appendChild(monthDiv);
+  }
+}
+
+function changeYear(offset) {
+  const newYear = currentYear + offset;
+  // falls du nur 2025-2030 willst:
+  if (newYear < 2025 || newYear > 2030) return;
+  currentYear = newYear;
+  generateYearCalendar(currentYear);
+}
+
+
+function addOrShowNote(dateStr) {
+  const existing = notes[dateStr] || "";
+  const text = prompt(`Notiz für ${dateStr}:`, existing);
+  if (text === null) return;
+
+  if (text.trim() === "") delete notes[dateStr];
+  else notes[dateStr] = text.trim();
+
+  localStorage.setItem("calendarNotes", JSON.stringify(notes));
+  generateYearCalendar(currentYear);
+}
+
+    function searchCurrentSection(query){
+      const sec = document.getElementById(currentSectionId);
+      if (!sec) return;
+      const q = (query || "").trim();
+      clearHighlights(sec);
+      if (!q) { resetSectionRows(currentSectionId); return; }
+
+      let firstHitRow = null;
+      sec.querySelectorAll("table tbody tr").forEach(row => {
+        const txt = (row.innerText || "").toLowerCase();
+        const match = txt.includes(q.toLowerCase());
+        row.style.display = match ? "" : "none";
+        if (match) {
+          const hits = highlightTextInRow(row, q);
+          if (!firstHitRow && hits > 0) firstHitRow = row;
+        }
+      });
+      if (firstHitRow) firstHitRow.scrollIntoView({ behavior:"smooth", block:"center" });
+    }
+
+    async function fetchClasses(){
+      const { data, error } = await client.from("klassen").select("*").order("name", { ascending:true });
+      if (error) {
+        showDebug("❌ Klassen konnten nicht geladen werden: " + escapeHtml(error.message) + "<br><br>➡️ Prüfe RLS/Policies oder ob Tabelle <b>klassen</b> existiert.");
+        return [];
+      }
+      return data || [];
+    }
+
+    async function loadClassesUI(){
+      const classes = await fetchClasses();
+      const studentSelect = document.getElementById("studentClassSelect");
+      const teacherSelect = document.getElementById("teacherClassesSelect");
+      const studentFilter = document.getElementById("studentClassFilter");
+      const teacherFilter = document.getElementById("teacherClassFilter");
+      const classSelect = document.getElementById("classSelect");
+
+      studentSelect.innerHTML = "";
+      if (classes.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = ""; opt.textContent = "Bitte zuerst Klasse anlegen";
+        studentSelect.appendChild(opt);
+      } else {
+        classes.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.name; opt.textContent = c.name;
+          studentSelect.appendChild(opt);
+        });
+      }
+
+      teacherSelect.innerHTML = "";
+      classes.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name; opt.textContent = c.name;
+        teacherSelect.appendChild(opt);
+      });
+
+      const curSF = studentFilter.value || "all";
+      studentFilter.innerHTML = "<option value='all'>Alle Klassen</option>";
+      classes.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name; opt.textContent = c.name;
+        studentFilter.appendChild(opt);
+      });
+      studentFilter.value = classes.some(c => c.name===curSF) ? curSF : "all";
+
+      const curTF = teacherFilter.value || "all";
+      teacherFilter.innerHTML = "<option value='all'>Alle Klassen</option>";
+      classes.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name; opt.textContent = c.name;
+        teacherFilter.appendChild(opt);
+      });
+      teacherFilter.value = classes.some(c => c.name===curTF) ? curTF : "all";
+
+      const curC = classSelect.value || "";
+      classSelect.innerHTML = "<option value=''>Bitte wählen</option>";
+      classes.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.name; opt.textContent = c.name;
+        classSelect.appendChild(opt);
+      });
+      classSelect.value = classes.some(c => c.name===curC) ? curC : "";
+
+      applyStudentFilters();
+      applyTeacherFilter();
+    }
+
+async function studentExistsNoPayment(s){
+  const { data, error } = await client
+    .from("schueler")
+    .select("id,name,parent,klasse,birth,street,plz,phone,email,h1,h2");
+
+  if (error) {
+    console.warn("Duplikatprüfung Schüler fehlgeschlagen:", error.message);
+    return false; // nicht blockieren, wenn Supabase Fehler liefert
+  }
+
+  const key = [
+    normStr(s.name),
+    normStr(s.parent),
+    normStr(s.klasse),
+    String(s.birth || ""),
+    normStr(s.street),
+    String(s.plz || ""),
+    String(s.phone || ""),
+    normStr(s.email),
+
+  ].join("|");
+
+  return (data || []).some(r => {
+    const k = [
+      normStr(r.name),
+      normStr(r.parent),
+      normStr(r.klasse),
+      String(r.birth || ""),
+      normStr(r.street),
+      String(r.plz || ""),
+      String(r.phone || ""),
+      normStr(r.email),
+
+    ].join("|");
+    return k === key;
+  });
+}
+
+
+async function addClass(){
+  const name = (document.getElementById("newClassName")?.value || "").trim();
+  if (!name) return;
+
+  // Frontend-Duplikatcheck (zusätzlich zur DB-Unique)
+  const n = normStr(name);
+  const { data: rows, error: selErr } = await client.from("klassen").select("name");
+  if (!selErr && (rows||[]).some(r => normStr(r.name) === n)) {
+    alert((localStorage.getItem("ui_lang")==="ar") ? "هذا الصف موجود بالفعل" : "Diese Klasse existiert bereits!");
+    return;
+  }
+
+  // Insert + 23505 abfangen (DB ist entscheidend)
+  const { error } = await client.from("klassen").insert([{ name }]);
+  if (error) {
+    if (String(error.code) === "23505") {
+      alert((localStorage.getItem("ui_lang")==="ar") ? "هذا الصف موجود بالفعل" : "Diese Klasse existiert bereits!");
+      return;
+    }
+    alert("Fehler: " + error.message);
+    return;
+  }
+
+  document.getElementById("newClassName").value = "";
+  await loadClassesUI();
+}
+
+
+
+    async function deleteClass(){
+      const cls = document.getElementById("classSelect").value;
+      if (!cls) return alert("Bitte Klasse auswählen.");
+      if (!confirm("Klasse '" + cls + "' wirklich löschen?")) return;
+      const { error } = await client.from("klassen").delete().eq("name", cls);
+      if (error) return alert("Fehler: " + error.message);
+      document.querySelector("#class-student-table tbody").innerHTML = "";
+      document.getElementById("classInfo").textContent = "";
+      await loadClassesUI();
+    }
+
+    async function showStudentsOfClass(){
+      const cls = document.getElementById("classSelect").value;
+      if (!cls) return alert("Bitte Klasse auswählen.");
+      const { data, error } = await client.from("schueler").select("*").eq("klasse", cls).order("id", { ascending:true });
+      if (error) return alert("Fehler: " + error.message);
+
+      document.getElementById("classInfo").innerHTML = "Klasse <b>" + escapeHtml(cls) + "</b> – Schüler: <b>" + (data||[]).length + "</b>";
+      const tbody = document.querySelector("#class-student-table tbody");
+      tbody.innerHTML = "";
+      (data||[]).forEach(s => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(String(s.id))}</td>
+          <td>${escapeHtml(s.klasse || "-")}</td>
+          <td>${escapeHtml(s.name || "-")}</td>
+          <td>${escapeHtml(s.parent || "-")}</td>
+          <td>${formatEuro(s.payment)}</td>
+          <td><button class="mini-btn" onclick="jumpToStudent(${s.id})">Öffnen</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function jumpToStudent(id){
+      showSection("students");
+      const { data } = await client.from("schueler").select("klasse").eq("id", id).single();
+      if (data?.klasse) {
+        document.getElementById("studentClassFilter").value = data.klasse;
+        document.getElementById("studentPaymentFilter").value = "all";
+        applyStudentFilters();
+      }
+      const row = [...document.querySelectorAll("#student-table tbody tr")].find(r => r.children[0].innerText.trim().startsWith(String(id)));
+      if (row) row.scrollIntoView({ behavior:"smooth", block:"center" });
+    }
+async function saveStudent(){
+  const id = document.getElementById("studentId")?.value || null;
+
+  const student = {
+    name:  (document.getElementById("studentName")?.value || "").trim(),
+    parent:(document.getElementById("parentName")?.value || "").trim(),
+    klasse:(document.getElementById("studentClassSelect")?.value || "").trim(),
+    birth: (document.getElementById("studentBirth")?.value || ""),
+    street:(document.getElementById("studentStreet")?.value || "").trim(),
+    plz:   (document.getElementById("studentPLZ")?.value || "").trim(),
+    phone: (document.getElementById("studentPhone")?.value || "").trim(),
+    email: (document.getElementById("studentEmail")?.value || "").trim(),
+    h1: !!document.getElementById("studentH1")?.checked,
+    h2: !!document.getElementById("studentH2")?.checked,
+    payment: parseFloat(document.getElementById("studentPayment")?.value) || 0
+  };
+
+  if (!student.klasse) return alert("Bitte Klasse auswählen (oder zuerst anlegen).");
+  if (!student.name || !student.parent || !student.birth || !student.street || !student.plz || !student.phone || !student.email) {
+    return alert("Bitte alle Pflichtfelder ausfüllen!");
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  if (student.birth > today) {
+    alert((localStorage.getItem("ui_lang")==="ar")
+      ? "تاريخ الميلاد لا يمكن أن يكون في المستقبل"
+      : "Geburtsdatum darf nicht in der Zukunft liegen!");
+    return;
+  }
+
+  if (typeof isValidName === "function" && !isValidName(student.name))
+    return alert("Schülername: nur Buchstaben (Deutsch/Arabisch) erlaubt!");
+  if (typeof isValidName === "function" && !isValidName(student.parent))
+    return alert("Elternname: nur Buchstaben (Deutsch/Arabisch) erlaubt!");
+  if (typeof isValidPLZ === "function" && !isValidPLZ(student.plz))
+    return alert("PLZ muss genau 5 Zahlen haben!");
+  if (typeof isValidPhone === "function" && !isValidPhone(student.phone))
+    return alert("Telefon: nur Zahlen (mind. 6 Ziffern)!");
+  if (typeof isValidEmail === "function" && !isValidEmail(student.email))
+    return alert("Bitte gültige E-Mail eingeben!");
+
+  if (!id && typeof studentExistsIdentical === "function") {
+    if (await studentExistsIdentical(student)) {
+      alert((localStorage.getItem("ui_lang")==="ar")
+        ? "هذا الطالب موجود بالفعل بنفس البيانات"
+        : "Dieser Schüler existiert bereits mit identischen Daten!");
+      return;
+    }
+  }
+
+  if (id) {
+    const { error } = await client.from("schueler").update(student).eq("id", id);
+    if (error) {
+      if (String(error.code) === "23505") {
+        alert((localStorage.getItem("ui_lang")==="ar")
+          ? "هذا الطالب موجود بالفعل بنفس البيانات"
+          : "Dieser Schüler existiert bereits mit identischen Daten!");
+        return;
+      }
+      return alert("Fehler: " + error.message);
+    }
+    if (typeof markEdited === "function") markEdited("student", id);
+
+  } else {
+    const { error } = await client.from("schueler").insert([student]);
+    if (error) {
+      if (String(error.code) === "23505") {
+        alert((localStorage.getItem("ui_lang")==="ar")
+          ? "هذا الطالب موجود بالفعل بنفس البيانات"
+          : "Dieser Schüler existiert bereits mit identischen Daten!");
+        return;
+      }
+      return alert("Fehler: " + error.message);
+    }
+  }
+
+  closeStudentModal();
+  await loadStudentsFromDB();
+  await loadClassesUI();
+  if ((window.currentSectionId || "") === "finance" && typeof renderFinance === "function") renderFinance();
+}
+
+
+    async function editStudent(id){
+      const { data, error } = await client.from("schueler").select("*").eq("id", id).single();
+      if (error) return alert("Fehler: " + error.message);
+      openStudentModal(data);
+    }
+
+    async function deleteStudentDB(id){
+      if (!confirm("Willst du diesen Schüler wirklich löschen?")) return;
+      const { error } = await client.from("schueler").delete().eq("id", id);
+      if (error) return alert("Fehler: " + error.message);
+      await loadStudentsFromDB();
+      await loadClassesUI();
+      if (currentSectionId==="finance") renderFinance();
+    }
+
+  async function loadStudentsFromDB(){
+      const { data, error } = await client.from("schueler").select("*").order("id", { ascending:true });
+      if (error) {
+        showDebug("❌ Schüler konnten nicht geladen werden: " + escapeHtml(error.message) + "<br><br>➡️ Prüfe Supabase Policies (RLS) für Tabelle <b>schueler</b>.");
+        return;
+      }
+
+      const tbody = document.querySelector("#student-table tbody");
+      tbody.innerHTML = "";
+      let total = 0;
+      (data||[]).forEach(s => {
+        total += (Number(s.payment) || 0);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(String(s.id))}${editedBadge("student", s.id)}</td>
+          <td>${escapeHtml(s.klasse || "-")}</td>
+          <td>${escapeHtml(s.name || "-")}</td>
+          <td>${escapeHtml(s.parent || "-")}</td>
+          <td>${escapeHtml(s.birth || "-")}</td>
+          <td>${escapeHtml(createdAtToDate(s.created_at))}</td>
+          <td>Tel: ${escapeHtml(s.phone || "-")}<br>Email: ${escapeHtml(s.email || "-")}<br>${escapeHtml(s.street || "-")}, ${escapeHtml(s.plz || "-")}</td>
+          <td><input type="checkbox" ${s.h1 ? "checked" : ""} disabled></td>
+          <td><input type="checkbox" ${s.h2 ? "checked" : ""} disabled></td>
+          <td>${formatEuro(s.payment)}</td>
+          <td>
+            <button class="mini-btn" onclick="editStudent(${s.id})" type="button">✏️</button>
+            <button class="mini-btn" onclick="deleteStudentDB(${s.id})" type="button">🗑️</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById("totalPayment").textContent = formatEuro(total);
+      applyStudentFilters();
+    }
+
+    function applyStudentFilters(){
+      const pay = document.getElementById("studentPaymentFilter").value;
+      const cls = document.getElementById("studentClassFilter").value;
+      document.querySelectorAll("#student-table tbody tr").forEach(r => {
+        const p = parseFloat((r.children[9].innerText||"").replace("€","")) || 0;
+        const rClass = (r.children[1].innerText||"").trim();
+        let ok = true;
+        if (pay==="paid" && p<=0) ok = false;
+        if (pay==="unpaid" && p>0) ok = false;
+        if (cls!=="all" && rClass!==cls) ok = false;
+        r.style.display = ok ? "" : "none";
+      });
+    }
+
+    function openTeacherModal(teacher=null){
+async function teacherExists(t){
+  const { data, error } = await client
+    .from("lehrer")
+    .select("name,email,phone,classes,edu");
+
+  if (error) {
+    console.warn("Duplikatprüfung Lehrer fehlgeschlagen:", error.message);
+    return false;
+  }
+
+  const key = [
+    normStr(t.name),
+    normStr(t.email),
+    String(t.phone || ""),
+    normStr(t.classes || ""),
+    normStr(t.edu || "")
+  ].join("|");
+
+  return (data || []).some(r => {
+    const k = [
+      normStr(r.name),
+      normStr(r.email),
+      String(r.phone || ""),
+      normStr(r.classes || ""),
+      normStr(r.edu || "")
+    ].join("|");
+    return k === key;
+  });
+}
+
+
+      document.getElementById("teacherModal").style.display="flex";
+      document.getElementById("teacherModalTitle").textContent = teacher ? "Lehrer bearbeiten" : "Lehrer hinzufügen";
+      document.getElementById("teacherId").value = teacher?.id || "";
+      document.getElementById("teacherName").value = teacher?.name || "";
+      document.getElementById("teacherEdu").value = teacher?.edu || "";
+      document.getElementById("teacherPhone").value = teacher?.phone || "";
+      document.getElementById("teacherEmail").value = teacher?.email || "";
+      const sel = document.getElementById("teacherClassesSelect");
+      const selected = new Set((teacher?.classes || "").split(",").map(x=>x.trim()).filter(Boolean));
+      [...sel.options].forEach(o => o.selected = selected.has(o.value));
+    }
+    function closeTeacherModal(){ document.getElementById("teacherModal").style.display="none"; }
+
+async function saveTeacher(){
+  const id = document.getElementById("teacherId")?.value || null;
+
+  const selected = Array.from(document.getElementById("teacherClassesSelect")?.selectedOptions || [])
+    .map(o => o.value.trim()).filter(Boolean);
+
+  const teacher = {
+    name: (document.getElementById("teacherName")?.value || "").trim(),
+    classes: selected.join(", "),
+    edu: (document.getElementById("teacherEdu")?.value || "").trim(),
+    phone: (document.getElementById("teacherPhone")?.value || "").trim(),
+    email: (document.getElementById("teacherEmail")?.value || "").trim()
+  };
+
+  if (!teacher.name || !teacher.classes) return alert("Bitte Name und Klasse(n) auswählen!");
+
+  if (!id && typeof teacherExists === "function") {
+    if (await teacherExists(teacher)) {
+      alert((localStorage.getItem("ui_lang")==="ar")
+        ? "هذا المعلم موجود بالفعل (نفس البيانات)"
+        : "Dieser Lehrer existiert bereits (identische Daten)!");
+      return;
+    }
+  }
+
+  if (id) {
+    const { error } = await client.from("lehrer").update(teacher).eq("id", id);
+    if (error) {
+      if (String(error.code) === "23505") {
+        alert((localStorage.getItem("ui_lang")==="ar")
+          ? "هذا المعلم موجود بالفعل (نفس البيانات)"
+          : "Dieser Lehrer existiert bereits (identische Daten)!");
+        return;
+      }
+      return alert("Fehler: " + error.message);
+    }
+    if (typeof markEdited === "function") markEdited("teacher", id);
+
+  } else {
+    const { error } = await client.from("lehrer").insert([teacher]);
+    if (error) {
+      if (String(error.code) === "23505") {
+        alert((localStorage.getItem("ui_lang")==="ar")
+          ? "هذا المعلم موجود بالفعل (نفس البيانات)"
+          : "Dieser Lehrer existiert bereits (identische Daten)!");
+        return;
+      }
+      return alert("Fehler: " + error.message);
+    }
+  }
+
+  if (typeof closeTeacherModal === "function") closeTeacherModal();
+  if (typeof loadTeachersFromDB === "function") await loadTeachersFromDB();
+}
+
+
+
+    async function editTeacher(id){
+      const { data, error } = await client.from("lehrer").select("*").eq("id", id).single();
+      if (error) return alert("Fehler: " + error.message);
+      openTeacherModal(data);
+    }
+
+    async function deleteTeacherDB(id){
+      if (!confirm("Willst du diesen Lehrer wirklich löschen?")) return;
+      const { error } = await client.from("lehrer").delete().eq("id", id);
+      if (error) return alert("Fehler: " + error.message);
+      await loadTeachersFromDB();
+    }
+
+    async function loadTeachersFromDB(){
+      const { data, error } = await client.from("lehrer").select("*").order("id", { ascending:true });
+      if (error) {
+        showDebug("❌ Lehrer konnten nicht geladen werden: " + escapeHtml(error.message) + "<br><br>➡️ Prüfe Supabase Policies (RLS) für Tabelle <b>lehrer</b>.");
+        return;
+      }
+      const tbody = document.querySelector("#teacher-table tbody");
+      tbody.innerHTML = "";
+      (data||[]).forEach(t => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(t.name || "-")}${editedBadge("teacher", t.id)}</td>
+          <td>${escapeHtml(t.classes || "-")}</td>
+          <td>${escapeHtml(t.edu || "-")}</td>
+          <td>${escapeHtml(t.phone || "-")}</td>
+          <td>${escapeHtml(t.email || "-")}</td>
+          <td>
+            <button class="mini-btn" onclick="editTeacher(${t.id})" type="button">✏️</button>
+            <button class="mini-btn" onclick="deleteTeacherDB(${t.id})" type="button">🗑️</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+      applyTeacherFilter();
+    }
+
+    function applyTeacherFilter(){
+      const filter = document.getElementById("teacherClassFilter").value;
+      document.querySelectorAll("#teacher-table tbody tr").forEach(r => {
+        const classes = (r.children[1].innerText || "").split(",").map(s=>s.trim());
+        r.style.display = (filter==="all" || classes.includes(filter)) ? "" : "none";
+      });
+    }
+
+    async function fetchManualFinances(){
+      const { data, error } = await client.from("finanzen").select("*").order("id", { ascending:true });
+      if (error) {
+        showDebug("❌ Finanzen konnten nicht geladen werden: " + escapeHtml(error.message) + "<br><br>➡️ Prüfe Supabase Policies (RLS) für Tabelle <b>finanzen</b>.");
+        return [];
+      }
+      return data || [];
+    }
+    async function fetchStudentFinances(){
+      const { data, error } = await client.from("schueler").select("*").order("id", { ascending:true });
+      if (error) return [];
+      return (data||[]).map(s => {
+        const amount = Number(s.payment) || 0;
+        return { source:"student", id:s.id, datum: createdAtToDate(s.created_at), beschreibung:"Schüler ID "+s.id, betrag: Math.abs(amount), typ: amount>=0 ? "Einnahme" : "Ausgabe", _raw: amount };
+      }).filter(x => (Number(x._raw)||0)!==0);
+    }
+    async function addManualFinanceEntry(){
+      const date = document.getElementById("financeDate").value || toISO(new Date());
+      const desc = (document.getElementById("financeDesc").value || "").trim() || "-";
+      const amount = parseFloat(document.getElementById("financeAmount").value);
+      const type = document.getElementById("financeType").value;
+      if (isNaN(amount)) return alert("Bitte gültigen Betrag eingeben.");
+
+      const entry = { datum:date, beschreibung:desc, betrag:Math.abs(amount), typ:normalizeType(type) };
+      const { error } = await client.from("finanzen").insert([entry]);
+      if (error) return alert("Fehler: " + error.message);
+
+      document.getElementById("financeDate").value="";
+      document.getElementById("financeDesc").value="";
+      document.getElementById("financeAmount").value="";
+      renderFinance();
+    }
+    async function renderFinance(){
+      const filter = document.getElementById("financeFilter").value;
+      const tbody = document.getElementById("financeTableBody");
+      tbody.innerHTML = "";
+
+      const [manual, student] = await Promise.all([fetchManualFinances(), fetchStudentFinances()]);
+      const manualRows = manual.map(f => ({ source:"manual", id:f.id, datum:f.datum||"-", beschreibung:f.beschreibung||"-", betrag:Number(f.betrag)||0, typ: normalizeType(f.typ||"Einnahme") }));
+      const all = [...student, ...manualRows].filter(r => {
+        if (filter==="income") return normalizeType(r.typ)==="Einnahme";
+        if (filter==="expense") return normalizeType(r.typ)==="Ausgabe";
+        if (filter==="student") return r.source==="student";
+        if (filter==="manual") return r.source==="manual";
+        return true;
+      });
+
+      let income=0, expenses=0;
+      all.forEach(r => {
+        const typ = normalizeType(r.typ);
+        const amount = Number(r.betrag)||0;
+        const signed = typ==="Ausgabe" ? -amount : amount;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(r.datum)}</td>
+          <td>${r.source==="student" ? '<span class="pill">Schüler</span>' : '<span class="pill">Manuell</span>'}</td>
+          <td>${escapeHtml(r.beschreibung)}${editedBadge(r.source, r.id)}</td>
+          <td>${formatEuro(signed)}</td>
+          <td>${escapeHtml(typ)}</td>
+          <td>
+            <button class="mini-btn" onclick="openFinanceEdit('${r.source}', ${r.id})" type="button">✏️</button>
+            <button class="mini-btn" onclick="deleteFinance('${r.source}', ${r.id})" type="button">🗑️</button>
+          </td>`;
+        tbody.appendChild(tr);
+
+        if (typ==="Einnahme") income += amount; else expenses += amount;
+      });
+
+      document.getElementById("financeIncome").textContent = formatEuro(income);
+      document.getElementById("financeExpenses").textContent = formatEuro(expenses);
+      document.getElementById("financeBalance").textContent = formatEuro(income - expenses);
+    }
+
+    function openFinanceEdit(source, id){
+      document.getElementById("financeEditModal").style.display="flex";
+      if (typeof applyTranslations === "function") applyTranslations();
+      document.getElementById("financeEditSource").value = source;
+      document.getElementById("financeEditId").value = id;
+
+      (async () => {
+        if (source==="manual") {
+          const { data, error } = await client.from("finanzen").select("*").eq("id", id).single();
+          if (error) return alert("Fehler: " + error.message);
+          document.getElementById("financeEditDate").value = data.datum || "";
+          document.getElementById("financeEditDesc").value = data.beschreibung || "";
+          document.getElementById("financeEditAmount").value = Number(data.betrag) || 0;
+          document.getElementById("financeEditType").value = uiType(data.typ);
+        } else {
+          const { data, error } = await client.from("schueler").select("*").eq("id", id).single();
+          if (error) return alert("Fehler: " + error.message);
+          document.getElementById("financeEditDate").value = createdAtToDate(data.created_at);
+          document.getElementById("financeEditDesc").value = "Schüler ID " + id;
+          document.getElementById("financeEditAmount").value = Number(data.payment) || 0;
+          document.getElementById("financeEditType").value = "income";
+        }
+      })();
+    }
+
+    async function saveFinanceEdit(){
+      const source = document.getElementById("financeEditSource").value;
+      const id = Number(document.getElementById("financeEditId").value);
+      const date = document.getElementById("financeEditDate").value || toISO(new Date());
+      const desc = (document.getElementById("financeEditDesc").value || "").trim() || "-";
+      const amount = parseFloat(document.getElementById("financeEditAmount").value);
+      const type = document.getElementById("financeEditType").value;
+      if (isNaN(amount)) return alert("Ungültiger Betrag.");
+
+      if (source==="manual") {
+        const payload = { datum:date, beschreibung:desc, betrag:Math.abs(amount), typ: normalizeType(type) };
+        const { error } = await client.from("finanzen").update(payload).eq("id", id);
+        if (error) return alert("Fehler: " + error.message);
+        markEdited("manual", id);
+      } else {
+        const { error } = await client.from("schueler").update({ payment: Math.abs(amount) }).eq("id", id);
+        if (error) return alert("Fehler: " + error.message);
+        markEdited("student", id);
+        await loadStudentsFromDB();
+      }
+      document.getElementById("financeEditModal").style.display="none";
+      renderFinance();
+    }
+
+   async function deleteFinance(source, id){
+  if (!confirm("Willst du diesen Eintrag wirklich löschen?")) return;
+
+  if (source === "manual") {
+    const { error } = await client.from("finanzen").delete().eq("id", id);
+    if (error) return alert("Fehler: " + error.message);
+  } else {
+    // source === "student"
+    const { error } = await client.from("schueler").update({ payment: 0 }).eq("id", id);
+    if (error) return alert("Fehler: " + error.message);
+
+    if (typeof markEdited === "function") markEdited("student", id);
+    if (typeof loadStudentsFromDB === "function") await loadStudentsFromDB();
+  }
+
+  if (typeof renderFinance === "function") renderFinance();
+}
+
+    function normStr(s){
+  return String(s||"")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g," ")
+    // arabische Tashkeel entfernen
+    .replace(/[ـًٌٍَُِّْ]/g,"")
+    // arabische Varianten vereinheitlichen
+    .replace(/[أإآ]/g,"ا")
+    .replace(/ى/g,"ي")
+    .replace(/ة/g,"ه")
+    // Satzzeichen ignorieren
+    .replace(/[.,;:!?'"()\-]/g,"");
+}
+
+
+    function printCurrentSection() {
+  // ✅ aktive Section sicher bestimmen
+  const activeSection =
+    document.getElementById(window.currentSectionId || "") ||
+    Array.from(document.querySelectorAll(".section")).find(sec => sec.style.display !== "none");
+
+  if (!activeSection) return alert("Keine Seite gefunden.");
+
+  const sectionId = activeSection.id;
+
+  // 🗓️ Kalender drucken (mit Ferien/Notizen/Heute-Markierung)
+  if (sectionId === "calendar") {
+    const title = activeSection.querySelector("h2")?.innerText || "Kalender";
+    const cal = document.getElementById("calendarYear");
+    if (!cal) return alert("Kalender-Inhalt nicht gefunden.");
+
+    const w = window.open("", "PRINT_CAL", "width=1000,height=900");
+    w.document.write(`
+      <html>
+      <head>
+        <title>${title}</title>
+        <style>
+          body{ font-family:Arial; padding:24px; }
+          h1{ text-align:center; margin:0 0 16px 0; }
+
+          .calendar-year{ display:flex; flex-wrap:wrap; justify-content:center; gap:25px; }
+          .month{ width:260px; border:1px solid #ccc; border-radius:12px; padding:10px; text-align:center; background:white; box-shadow:0 2px 6px rgba(0,0,0,0.1); page-break-inside:avoid; }
+          .month h3{ margin-bottom:8px; }
+          .calendar-grid{ display:grid; grid-template-columns:repeat(7, 1fr); gap:4px; }
+          .day{ padding:6px; border-radius:6px; background:#f8f8f8; min-height:40px; position:relative; cursor:pointer; font-size:12px; }
+          .day-name{ font-weight:bold; background:#ddd; border-radius:4px; padding:6px; font-size:12px; }
+          .sunday{ color:red; }
+          .holiday{ background:#ffb3b3 !important; color:#900; font-weight:bold; }
+          .noteday{ background:#c4f3c2 !important; color:#084c08; font-weight:bold; }
+          .note-preview{ font-size:10px; display:block; margin-top:2px; color:#333; }
+          .today{ background:yellow !important; color:black !important; font-weight:bold; border:2px solid orange; }
+
+          @media print { body{ padding:0; } }
+        </style>
+      </head>
+      <body>
+        <h1>${title}</h1>
+        ${cal.outerHTML}
+      </body>
+      </html>
+    `);
+    w.document.close();
+    w.focus();
+    w.print();
+    return;
+  }
+
+  // 📄 alle anderen Seiten: Tabellen drucken (wie bisher)
+  const title = activeSection.querySelector("h2")?.innerText || "Bericht";
+  const tables = activeSection.querySelectorAll("table");
+  let tablesHTML = "";
+  tables.forEach(t => tablesHTML += t.outerHTML);
+
+  const w = window.open("", "PRINT", "width=1000,height=900");
+  w.document.write(`
+    <html>
+    <head>
+      <title>${title}</title>
+      <style>
+        body{ font-family:Arial; padding:24px; }
+        h1{ text-align:center; margin:0 0 14px 0; }
+        table{ width:100%; border-collapse:collapse; margin-bottom:24px; }
+        th,td{ border:1px solid #666; padding:8px; font-size:14px; }
+        th{ background:#e8f5e9; }
+      </style>
+    </head>
+    <body>
+      <h1>${title}</h1>
+      ${tablesHTML}
+    </body>
+    </html>
+  `);
+  w.document.close();
+  w.focus();
+  w.print();
+}
+
+    async function testConnection(){
+      try {
+        const { error } = await client.from("klassen").select("id").limit(1);
+        const el = document.getElementById("connStatus");
+        if (error) el.innerHTML = "Supabase Status: <b style='color:#b00020'>Fehler</b> – " + escapeHtml(error.message);
+        else el.innerHTML = "Supabase Status: <b style='color:#2e7d32'>OK</b>";
+      } catch (e) {
+        document.getElementById("connStatus").innerHTML = "Supabase Status: <b style='color:#b00020'>Fehler</b> – Script/Key prüfen";
+      }
+    }
+
+    function doLogin(){
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (username==="Hussin.Albalkhi" && password==="H.Ahlen") {
+        currentUser = username;
+        document.querySelector(".login-container").style.display="none";
+        document.querySelector(".dashboard").style.display="block";
+        showSection("students");
+        loadAllData();
+      } else alert("Falscher Benutzername oder Passwort!");
+    }
+
+    async function loadAllData(){
+      await loadClassesUI();
+      await Promise.all([loadStudentsFromDB(), loadTeachersFromDB()]);
+    }
+
+    // ✅ Helper: addEventListener nur wenn Element existiert
+const on = (id, ev, fn) => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener(ev, fn);
+};
+
+// ✅ Suche (nur wenn vorhanden)
+const searchContainer = document.getElementById("searchContainer");
+const searchToggle = document.getElementById("searchToggle");
+const searchBox = document.getElementById("searchBox");
+
+if (searchBox && searchToggle && searchContainer) {
+  searchBox.placeholder = "";
+  searchToggle.addEventListener("click", () => {
+    const active = searchContainer.classList.toggle("active");
+    if (active) { searchBox.placeholder = t ? t("search_ph") : "Suche..."; searchBox.focus(); }
+    else {
+      searchBox.value = ""; searchBox.placeholder = "";
+      if (typeof searchCurrentSection === "function") searchCurrentSection("");
+    }
+  });
+
+  searchBox.addEventListener("input", (e) => {
+    if (typeof searchCurrentSection === "function") searchCurrentSection(e.target.value);
+  });
+}
+function closeStudentModal(){
+  const modal = document.getElementById("studentModal");
+  if (modal) modal.style.display = "none";
+}
+
+// ✅ Login / Nav / Print
+on("loginBtn", "click", doLogin);
+document.querySelectorAll(".navbtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    if (typeof showSection === "function") showSection(btn.dataset.target);
+  });
+});
+on("printBtn", "click", printCurrentSection);
+
+// ✅ Schüler
+on("addStudentBtn", "click", () => openStudentModal(null));
+on("studentCancelBtn", "click", closeStudentModal);
+on("studentSaveBtn", "click", saveStudent);
+
+on("studentPaymentFilter", "change", () => {
+  if (typeof applyStudentFilters === "function") applyStudentFilters();
+});
+on("studentClassFilter", "change", () => {
+  if (typeof applyStudentFilters === "function") applyStudentFilters();
+});
+on("resetStudentFilterBtn", "click", () => {
+  const pf = document.getElementById("studentPaymentFilter");
+  const cf = document.getElementById("studentClassFilter");
+  if (pf) pf.value = "all";
+  if (cf) cf.value = "all";
+  if (typeof applyStudentFilters === "function") applyStudentFilters();
+});
+
+// ✅ Lehrer
+on("addTeacherBtn", "click", () => openTeacherModal(null));
+on("teacherCancelBtn", "click", closeTeacherModal);
+on("teacherSaveBtn", "click", saveTeacher);
+on("teacherClassFilter", "change", () => {
+  if (typeof applyTeacherFilter === "function") applyTeacherFilter();
+});
+
+// ✅ Klassen
+on("addClassBtn", "click", () => {
+  if (typeof addClass === "function") addClass();
+});
+on("showClassStudentsBtn", "click", () => {
+  if (typeof showStudentsOfClass === "function") showStudentsOfClass();
+});
+on("deleteClassBtn", "click", () => {
+  if (typeof deleteClass === "function") deleteClass();
+});
+
+// ✅ Finanzen
+on("financeAddBtn", "click", () => {
+  if (typeof addManualFinanceEntry === "function") addManualFinanceEntry();
+});
+on("financeFilter", "change", () => {
+  if (typeof renderFinance === "function") renderFinance();
+});
+on("financeEditCancelBtn", "click", () => {
+  const m = document.getElementById("financeEditModal");
+  if (m) m.style.display = "none";
+});
+on("financeEditSaveBtn", "click", () => {
+  if (typeof saveFinanceEdit === "function") saveFinanceEdit();
+});
+
+// ====== LANGUAGE (DE/AR) FULL UI TRANSLATION ======
+const LANG = {
+  de: {
+    // Login
+    login_title: "Login",
+    username: "Benutzername",
+    password: "Passwort",
+    login_btn: "Anmelden",
+    demo_text: "Demo-Zugang:<br> Benutzer: Hussin.Albalkhi <br> Passwort: H.Ahlen",
+
+    // Nav
+    nav_students: "Schüler",
+    nav_teachers: "Lehrer",
+    nav_classes: "Klassen",
+    nav_finance: "Finanzen",
+    nav_calendar: "Kalender",
+    nav_contact: "Kontakt",
+    nav_search: "Suche",
+    nav_print: "Drucken",
+    search_ph: "Suche...",
+
+    // Sections titles
+    students_title: "Schülerverwaltung",
+    teachers_title: "Lehrerverwaltung",
+    classes_title: "Klassen",
+    finance_title: "Finanzen",
+    calendar_title: "Schulferien-Kalender NRW",
+    contact_title: "Kontakt",
+
+    // Buttons
+    add_student: "+ Schüler hinzufügen",
+    add_teacher: "+ Lehrer hinzufügen",
+    reset: "Zurücksetzen",
+    add: "Hinzufügen",
+    show_students: "Schüler anzeigen",
+    delete_class: "Klasse löschen",
+    send: "Senden",
+
+    // Filters / labels
+    filter: "Filter:",
+    filter_class: "Filter Klasse:",
+    new_class: "Neue Klasse:",
+    class_select: "Klasse auswählen:",
+
+    // Students table headers
+    th_id: "ID",
+    th_class: "Klasse",
+    th_name: "Name",
+    th_parent: "Eltern Name",
+    th_birth: "Geburtsdatum",
+    th_added: "Eingefügt",
+    th_contact: "Kontakt / Anschrift",
+    th_h1: "H1",
+    th_h2: "H2",
+    th_payment: "Bezahlung",
+    th_actions: "Aktionen",
+    sum_income_students: "Summe Einnahmen:",
+
+    // Teachers table headers
+    th_t_name: "Name",
+    th_t_classes: "Klasse(n)",
+    th_t_edu: "Education",
+    th_t_phone: "Telefon",
+    th_t_email: "E-Mail",
+    th_t_actions: "Aktionen",
+
+    // Class table headers
+    th_c_parent: "Eltern",
+    th_c_pay: "Bezahlung",
+    th_c_action: "Aktion",
+
+    // Finance
+    finance_filter_all: "Alle",
+    finance_filter_income: "Einnahmen",
+    finance_filter_expense: "Ausgaben",
+    finance_filter_student: "Nur Schüler",
+    finance_filter_manual: "Nur Manuell",
+
+    finance_ph_desc: "Grund / Beschreibung",
+    finance_ph_amount: "Betrag",
+    finance_income: "Einnahme",
+    finance_expense: "Ausgabe",
+    finance_source: "Quelle",
+    finance_date: "Datum",
+    finance_desc: "Grund / Beschreibung",
+    finance_amount: "Betrag",
+    finance_type: "Typ",
+    finance_actions: "Aktionen",
+
+    sum: "Summe",
+    balance: "Saldo",
+
+    // Modals
+    m_student_add: "Schüler hinzufügen",
+    m_student_edit: "Schüler bearbeiten",
+    lbl_student_name: "Schülername",
+    ph_student_name: "Max Mustermann",
+    lbl_parent_name: "Elternname",
+    ph_parent_name: "Eltern Mustermann",
+    lbl_class: "Klasse",
+    lbl_birth: "Geburtsdatum",
+    lbl_street: "Straße & Hausnummer",
+    lbl_plz: "PLZ",
+    ph_plz: "PLZ (5 Zahlen)",
+    lbl_phone: "Telefon",
+    ph_phone: "Telefon (nur Zahlen)",
+    lbl_email: "E-Mail",
+    ph_email: "email@beispiel.de",
+    half1: "Halbjahr 1",
+    half2: "Halbjahr 2",
+    lbl_pay_eur: "Bezahlung (€)",
+    save: "Speichern",
+    cancel: "Abbrechen",
+
+    m_teacher_add: "Lehrer hinzufügen",
+    m_teacher_edit: "Lehrer bearbeiten",
+    lbl_teacher_name: "Lehrername",
+    lbl_teacher_classes: "Klasse(n)",
+    lbl_teacher_multi: "(Mehrfachauswahl: Strg/Cmd klicken)",
+    lbl_teacher_edu: "Education / Qualifikation",
+    lbl_teacher_phone: "Telefon",
+    lbl_teacher_email: "E-Mail",
+
+    // DE
+    opt_choose: "Bitte wählen",
+    opt_all_classes: "Alle Klassen",
+    ph_class_example: "z.B. Klasse A",
+
+    m_fin_edit: "Eintrag bearbeiten"
+  },
+
+  ar: {
+    // Login
+    login_title: "تسجيل الدخول",
+    username: "اسم المستخدم",
+    password: "كلمة المرور",
+    login_btn: "دخول",
+    demo_text: "بيانات تجريبية:<br> المستخدم: Hussin.Albalkhi <br> كلمة المرور: H.Ahlen",
+
+    // Nav
+    nav_students: "الطلاب",
+    nav_teachers: "المعلمون",
+    nav_classes: "الصفوف",
+    nav_finance: "المالية",
+    nav_calendar: "التقويم",
+    nav_contact: "تواصل",
+    nav_search: "بحث",
+    nav_print: "طباعة",
+    search_ph: "بحث...",
+
+    // Sections titles
+    students_title: "إدارة الطلاب",
+    teachers_title: "إدارة المعلمين",
+    classes_title: "إدارة الصفوف",
+    finance_title: "المالية",
+    calendar_title: "عطلة المدارس NRW",
+    contact_title: "تواصل",
+
+    // Buttons
+    add_student: "إضافة طالب +",
+    add_teacher: "إضافة معلم +",
+    reset: "إعادة ضبط",
+    add: "إضافة",
+    show_students: "عرض الطلاب",
+    delete_class: "حذف الصف",
+    send: "إرسال",
+
+    // Filters / labels
+    filter: "تصفية:",
+    filter_class: "تصفية حسب الصف:",
+    new_class: "صف جديد:",
+    class_select: "اختر الصف:",
+
+    // Students table headers
+    th_id: "المعرّف",
+    th_class: "الصف",
+    th_name: "الاسم",
+    th_parent: "اسم وليّ الأمر",
+    th_birth: "تاريخ الميلاد",
+    th_added: "تاريخ الإضافة",
+    th_contact: "العنوان / التواصل",
+    th_h1: "الفصل 1",
+    th_h2: "الفصل 2",
+    th_payment: "الدفع",
+    th_actions: "إجراءات",
+    sum_income_students: "مجموع الإيرادات:",
+
+    // Teachers table headers
+    th_t_name: "الاسم",
+    th_t_classes: "الصفوف",
+    th_t_edu: "المؤهل",
+    th_t_phone: "الهاتف",
+    th_t_email: "البريد الإلكتروني",
+    th_t_actions: "إجراءات",
+
+    // Class table headers
+    th_c_parent: "وليّ الأمر",
+    th_c_pay: "الدفع",
+    th_c_action: "إجراء",
+
+   // Finance
+finance_filter_all: "الكل",
+finance_filter_income: "إيرادات",
+finance_filter_expense: "مصروفات",
+finance_filter_student: "طلاب فقط",
+finance_filter_manual: "يدوي فقط",
+
+finance_ph_desc: "السبب / الوصف",
+finance_ph_amount: "المبلغ",
+
+finance_income: "إيراد",
+finance_expense: "مصروف",
+
+finance_source: "المصدر",
+finance_date: "التاريخ",
+finance_desc: "السبب / الوصف",
+finance_amount: "المبلغ",
+finance_type: "النوع",
+finance_actions: "إجراءات",
+
+sum: "المجموع",
+balance: "الرصيد",
+
+
+    sum: "المجموع",
+    balance: "الرصيد",
+
+    // Modals
+    m_student_add: "إضافة طالب",
+    m_student_edit: "تعديل طالب",
+    lbl_student_name: "اسم الطالب",
+    ph_student_name: "محمد أحمد",
+    lbl_parent_name: "اسم وليّ الأمر",
+    ph_parent_name: "أحمد محمد",
+    lbl_class: "الصف",
+    lbl_birth: "تاريخ الميلاد",
+    lbl_street: "الشارع ورقم المنزل",
+    lbl_plz: "الرمز البريدي",
+    ph_plz: "5 أرقام",
+    lbl_phone: "الهاتف",
+    ph_phone: "أرقام فقط",
+    lbl_email: "البريد الإلكتروني",
+    ph_email: "email@example.com",
+    half1: "النصف الأول",
+    half2: "النصف الثاني",
+    lbl_pay_eur: "الدفع (€)",
+    save: "حفظ",
+    cancel: "إلغاء",
+
+    m_teacher_add: "إضافة معلم",
+    m_teacher_edit: "تعديل معلم",
+    lbl_teacher_name: "اسم المعلم",
+    lbl_teacher_classes: "الصفوف",
+    lbl_teacher_multi: "(تحديد متعدد: اضغط Ctrl/Cmd أثناء الاختيار)",
+    lbl_teacher_edu: "المؤهل / التخصص",
+    lbl_teacher_phone: "الهاتف",
+    lbl_teacher_email: "البريد الإلكتروني",
+    opt_choose: "اختر من فضلك",
+    opt_all_classes: "كل الصفوف",
+    ph_class_example: "مثال: الصف A",
+
+    m_fin_edit: "تعديل الإدخال"
+    // AR
+
+  }
+};
+
+function t(key){
+  const lang = localStorage.getItem("ui_lang") || "de";
+  return LANG[lang]?.[key] ?? key;
+}
+
+function setLang(lang){
+  localStorage.setItem("ui_lang", lang);
+
+  // RTL/LTR
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+
+  applyTranslations();
+}
+
+
+function applyTranslations(){
+  const lang = localStorage.getItem("ui_lang") || "de";
+
+  // Klassen-Select: "Bitte wählen"
+const chooseOpt = document.querySelector("#classSelect option[value='']");
+if (chooseOpt) chooseOpt.textContent = t("opt_choose");
+
+// Neue Klasse Placeholder
+const newClassName = document.getElementById("newClassName");
+if (newClassName) newClassName.placeholder = t("ph_class_example");
+
+// Student Klassen Filter erste Option
+const scf = document.querySelector("#studentClassFilter option[value='all']");
+if (scf) scf.textContent = t("opt_all_classes");
+
+// Teacher Klassen Filter erste Option
+const tcf = document.querySelector("#teacherClassFilter option[value='all']");
+if (tcf) tcf.textContent = t("opt_all_classes");
+
+  // ---- LOGIN ----
+  const loginH2 = document.querySelector(".login-form h2");
+  if (loginH2) loginH2.textContent = t("login_title");
+
+  const labUser = document.querySelector('label[for="username"]');
+  if (labUser) labUser.textContent = t("username");
+
+  const labPass = document.querySelector('label[for="password"]');
+  if (labPass) labPass.textContent = t("password");
+
+  const inUser = document.getElementById("username");
+  if (inUser) inUser.placeholder = t("username");
+
+  const inPass = document.getElementById("password");
+  if (inPass) inPass.placeholder = t("password");
+
+  const loginBtn = document.getElementById("loginBtn");
+  if (loginBtn) loginBtn.textContent = t("login_btn");
+
+  // Demo Text (erstes <p> nach button)
+  const demoP = document.querySelector(".login-form p");
+  if (demoP) demoP.innerHTML = LANG[lang].demo_text;
+
+  // ---- NAV ----
+  const navBtns = document.querySelectorAll(".nav .navbtn");
+  navBtns.forEach(b => {
+    const target = b.getAttribute("data-target");
+    if (target === "students") b.textContent = t("nav_students");
+    if (target === "teachers") b.textContent = t("nav_teachers");
+    if (target === "classes")  b.textContent = t("nav_classes");
+    if (target === "finance")  b.textContent = t("nav_finance");
+    if (target === "contact")  b.textContent = t("nav_contact");
+  });
+
+  // Kalender Button (bei dir hat er keine navbtn-Klasse!)
+  const calBtn = document.querySelector('.nav button[onclick*="showSection(\'calendar\')"]');
+  if (calBtn) calBtn.textContent = t("nav_calendar");
+
+  const searchToggle = document.getElementById("searchToggle");
+  if (searchToggle) searchToggle.textContent = t("nav_search");
+
+  const searchBox = document.getElementById("searchBox");
+  if (searchBox) searchBox.setAttribute("placeholder", t("search_ph"));
+
+  const printBtn = document.getElementById("printBtn");
+  if (printBtn) printBtn.textContent = t("nav_print");
+
+  // Toggle Button Label
+  const langBtn = document.getElementById("langToggleBtn");
+  if (langBtn) langBtn.textContent = (lang === "de") ? "العربية" : "Deutsch";
+
+  // ---- SECTION TITLES ----
+  const h2Students = document.querySelector("#students h2");
+  if (h2Students) h2Students.textContent = t("students_title");
+  const h2Teachers = document.querySelector("#teachers h2");
+  if (h2Teachers) h2Teachers.textContent = t("teachers_title");
+  const h2Classes = document.querySelector("#classes h2");
+  if (h2Classes) h2Classes.textContent = t("classes_title");
+  const h2Finance = document.querySelector("#finance h2");
+  if (h2Finance) h2Finance.textContent = t("finance_title");
+  const h2Calendar = document.querySelector("#calendar h2");
+  if (h2Calendar) h2Calendar.textContent = t("calendar_title");
+  const h2Contact = document.querySelector("#contact h2");
+  if (h2Contact) h2Contact.textContent = t("contact_title");
+
+  // ---- BUTTONS ----
+  const addStudentBtn = document.getElementById("addStudentBtn");
+  if (addStudentBtn) addStudentBtn.textContent = t("add_student");
+  const addTeacherBtn = document.getElementById("addTeacherBtn");
+  if (addTeacherBtn) addTeacherBtn.textContent = t("add_teacher");
+
+  const resetBtn = document.getElementById("resetStudentFilterBtn");
+  if (resetBtn) resetBtn.textContent = t("reset");
+
+  const addClassBtn = document.getElementById("addClassBtn");
+  if (addClassBtn) addClassBtn.textContent = t("add");
+  const showClassStudentsBtn = document.getElementById("showClassStudentsBtn");
+  if (showClassStudentsBtn) showClassStudentsBtn.textContent = t("show_students");
+  const deleteClassBtn = document.getElementById("deleteClassBtn");
+  if (deleteClassBtn) deleteClassBtn.textContent = t("delete_class");
+
+  const financeAddBtn = document.getElementById("financeAddBtn");
+  if (financeAddBtn) financeAddBtn.textContent = t("add");
+
+  // Contact send button
+  const sendBtn = document.querySelector('#contactForm button[type="submit"]');
+  if (sendBtn) sendBtn.textContent = t("send");
+
+  // ---- FILTER LABELS ----
+  // Students filter label is first label inside students .filter
+  const stuFilterLabel = document.querySelector("#students .filter label");
+  if (stuFilterLabel) stuFilterLabel.textContent = t("filter");
+
+  const teachFilterLabel = document.querySelector("#teachers .filter label");
+  if (teachFilterLabel) teachFilterLabel.textContent = t("filter_class");
+
+  const classFilterLabels = document.querySelectorAll("#classes .filter label");
+  if (classFilterLabels[0]) classFilterLabels[0].textContent = t("new_class");
+  if (classFilterLabels[1]) classFilterLabels[1].textContent = t("class_select");
+
+  const finFilterLabel = document.querySelector("#finance .filter label");
+  if (finFilterLabel) finFilterLabel.textContent = t("filter");
+
+  // ---- STUDENTS TABLE HEADERS + FOOTER ----
+  const stHead = document.querySelectorAll("#student-table thead th");
+  // Reihenfolge wie in deinem HTML:
+  const mapStudent = ["th_id","th_class","th_name","th_parent","th_birth","th_added","th_contact","th_h1","th_h2","th_payment","th_actions"];
+  stHead.forEach((th,i)=>{ if(mapStudent[i]) th.textContent = t(mapStudent[i]); });
+
+  const sumLabel = document.querySelector('#student-table tfoot td[colspan="9"]');
+  if (sumLabel) sumLabel.textContent = t("sum_income_students");
+
+  // ---- TEACHERS TABLE HEADERS ----
+  const ttHead = document.querySelectorAll("#teacher-table thead th");
+  const mapTeacher = ["th_t_name","th_t_classes","th_t_edu","th_t_phone","th_t_email","th_t_actions"];
+  ttHead.forEach((th,i)=>{ if(mapTeacher[i]) th.textContent = t(mapTeacher[i]); });
+
+  // ---- CLASSES TABLE HEADERS ----
+  const ctHead = document.querySelectorAll("#class-student-table thead th");
+  const mapClass = ["th_id","th_class","th_name","th_c_parent","th_c_pay","th_c_action"];
+  ctHead.forEach((th,i)=>{ if(mapClass[i]) th.textContent = t(mapClass[i]); });
+
+  // ---- FINANCE ----
+  // finance filter options
+  const finOpt = document.querySelectorAll("#financeFilter option");
+  finOpt.forEach(o=>{
+    if (o.value==="all") o.textContent = t("finance_filter_all");
+    if (o.value==="income") o.textContent = t("finance_filter_income");
+    if (o.value==="expense") o.textContent = t("finance_filter_expense");
+    if (o.value==="student") o.textContent = t("finance_filter_student");
+    if (o.value==="manual") o.textContent = t("finance_filter_manual");
+  });
+
+  const financeDesc = document.getElementById("financeDesc");
+  if (financeDesc) financeDesc.placeholder = t("finance_ph_desc");
+  const financeAmount = document.getElementById("financeAmount");
+  if (financeAmount) financeAmount.placeholder = t("finance_ph_amount");
+
+  // finance type select
+  const finTypeOpts = document.querySelectorAll("#financeType option");
+  finTypeOpts.forEach(o=>{
+    if (o.value==="income") o.textContent = t("finance_income");
+    if (o.value==="expense") o.textContent = t("finance_expense");
+  });
+
+  // finance table headers
+  const fHead = document.querySelectorAll("#finance table thead th, #finance .table-wrap table thead th");
+  // In deinem Finance-Table: Datum, Quelle, Grund..., Betrag, Typ, Aktionen
+  const mapFin = ["finance_date","finance_source","finance_desc","finance_amount","finance_type","finance_actions"];
+  fHead.forEach((th,i)=>{ if(mapFin[i]) th.textContent = t(mapFin[i]); });
+
+  
+
+  // finance footer labels
+  // ===== FINANCE FOOTER =====
+const fSumIn = document.getElementById("financeSumIncomeLabel");
+if (fSumIn) fSumIn.textContent = t("sum");
+
+const fSumEx = document.getElementById("financeSumExpenseLabel");
+if (fSumEx) fSumEx.textContent = t("sum");
+
+const fBal = document.getElementById("financeBalanceLabel");
+if (fBal) fBal.textContent = t("balance");
+
+
+const fBalSide = document.getElementById("financeBalanceSideLabel");
+if (fBalSide) fBalSide.textContent = ""; // bewusst leer lassen
+
+
+const fInLab = document.getElementById("financeIncomeLabel");
+if (fInLab) fInLab.textContent = t("finance_filter_income");
+
+const fExLab = document.getElementById("financeExpensesLabel");
+if (fExLab) fExLab.textContent = t("finance_filter_expense");
+
+
+  // ---- MODALS (Student) ----
+  const smTitle = document.getElementById("studentModalTitle");
+  if (smTitle) {
+    // wenn studentId gesetzt ist, ist es Bearbeiten
+    const isEdit = !!(document.getElementById("studentId")?.value);
+    smTitle.textContent = isEdit ? t("m_student_edit") : t("m_student_add");
+  }
+
+  const smLabels = document.querySelectorAll("#studentModal label");
+  // Reihenfolge entspricht deinem Modal (wichtig!)
+  const smKeys = [
+    "lbl_student_name","lbl_parent_name","lbl_class","lbl_birth","lbl_street",
+    "lbl_plz","lbl_phone","lbl_email","lbl_pay_eur"
+  ];
+  // smLabels enthält auch die 2 Checkbox-Labels (Halbjahr). Die behandeln wir separat:
+  let li = 0;
+  smLabels.forEach(lab=>{
+    const text = lab.textContent.trim();
+    if (text.includes("Halbjahr")) return; // skip checkbox labels
+    if (smKeys[li]) lab.textContent = t(smKeys[li]);
+    li++;
+  });
+
+  const sName = document.getElementById("studentName");
+  if (sName) sName.placeholder = t("ph_student_name");
+  const pName = document.getElementById("parentName");
+  if (pName) pName.placeholder = t("ph_parent_name");
+  const plz = document.getElementById("studentPLZ");
+  if (plz) plz.placeholder = t("ph_plz");
+  const phone = document.getElementById("studentPhone");
+  if (phone) phone.placeholder = t("ph_phone");
+  const email = document.getElementById("studentEmail");
+  if (email) email.placeholder = t("ph_email");
+
+  // Halbjahr Checkbox Labels
+  const h1Lab = document.querySelector('label:has(#studentH1)');
+  const h2Lab = document.querySelector('label:has(#studentH2)');
+  if (h1Lab) h1Lab.lastChild.textContent = " " + t("half1");
+  if (h2Lab) h2Lab.lastChild.textContent = " " + t("half2");
+
+  const sSave = document.getElementById("studentSaveBtn");
+  if (sSave) sSave.textContent = t("save");
+  const sCancel = document.getElementById("studentCancelBtn");
+  if (sCancel) sCancel.textContent = t("cancel");
+
+  // ---- MODALS (Teacher) ----
+  const tmTitle = document.getElementById("teacherModalTitle");
+  if (tmTitle) {
+    const isEdit = !!(document.getElementById("teacherId")?.value);
+    tmTitle.textContent = isEdit ? t("m_teacher_edit") : t("m_teacher_add");
+  }
+
+  const tmLabels = document.querySelectorAll("#teacherModal label");
+  const tmKeys = ["lbl_teacher_name","lbl_teacher_classes","lbl_teacher_edu","lbl_teacher_phone","lbl_teacher_email"];
+  tmLabels.forEach((lab,i)=>{ if (tmKeys[i]) lab.textContent = t(tmKeys[i]); });
+
+  const multiHint = document.querySelector("#teacherModal .modal-content div[style*='Mehrfachauswahl']");
+  if (multiHint) multiHint.textContent = t("lbl_teacher_multi");
+
+  const tSave = document.getElementById("teacherSaveBtn");
+  if (tSave) tSave.textContent = t("save");
+  const tCancel = document.getElementById("teacherCancelBtn");
+  if (tCancel) tCancel.textContent = t("cancel");
+
+  // ---- FINANCE EDIT MODAL ----
+  const fmTitle = document.querySelector("#financeEditModal h3");
+  if (fmTitle) fmTitle.textContent = t("m_fin_edit");
+
+  const fmLabels = document.querySelectorAll("#financeEditModal label");
+  const fmKeys = ["finance_date","finance_desc","finance_amount","finance_type"];
+  fmLabels.forEach((lab,i)=>{ if (fmKeys[i]) lab.textContent = t(fmKeys[i]); });
+
+
+  
+  const fTypeOpts = document.querySelectorAll("#financeEditType option");
+  fTypeOpts.forEach(o=>{
+    if (o.value==="income") o.textContent = t("finance_income");
+    if (o.value==="expense") o.textContent = t("finance_expense");
+  });
+
+  const fSave = document.getElementById("financeEditSaveBtn");
+  if (fSave) fSave.textContent = t("save");
+  const fCancel = document.getElementById("financeEditCancelBtn");
+  if (fCancel) fCancel.textContent = t("cancel");
+
+  // ---- CONTACT FORM ----
+  // labels + placeholders
+  const cLabels = document.querySelectorAll("#contactForm label");
+  if (cLabels[0]) cLabels[0].textContent = (lang==="ar") ? "الاسم" : "Name";
+  if (cLabels[1]) cLabels[1].textContent = (lang==="ar") ? "البريد الإلكتروني" : "E-Mail";
+  if (cLabels[2]) cLabels[2].textContent = (lang==="ar") ? "الرسالة" : "Nachricht";
+
+  const cName = document.querySelector('#contactForm input[name="name"]');
+  if (cName) cName.placeholder = (lang==="ar") ? "اسمك" : "Dein Name";
+  const cEmail = document.querySelector('#contactForm input[name="email"]');
+  if (cEmail) cEmail.placeholder = (lang==="ar") ? "example@mail.com" : "beispiel@mail.de";
+}
+
+// Toggle button handler
+function toggleLang(){
+  const current = localStorage.getItem("ui_lang") || "de";
+  setLang(current === "de" ? "ar" : "de");
+}
+
+// init
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("langToggleBtn");
+  if (btn) btn.addEventListener("click", toggleLang);
+
+  // Startsprache: gespeicherte oder Deutsch
+  setLang(localStorage.getItem("ui_lang") || "de");
+});
+
+    // expose for inline buttons
+   // ✅ expose safely (crasht nicht, wenn etwas fehlt)
+// ✅ SAFE EXPORTS (nie mehr "is not defined")
+(function(){
+  const safeExpose = (name, fn) => {
+    try {
+      if (typeof fn === "function") window[name] = fn;
+    } catch(e) {}
+  };
+function openStudentModal(student=null){
+  const modal = document.getElementById("studentModal");
+  if (!modal) return alert("studentModal fehlt im HTML!");
+
+  modal.style.display = "flex";
+
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (val ?? "");
+  };
+  const setChk = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+  };
+
+  setVal("studentId", student?.id || "");
+  setVal("studentName", student?.name || "");
+  setVal("parentName", student?.parent || "");
+
+  const classSel = document.getElementById("studentClassSelect");
+  if (classSel) classSel.value = student?.klasse || classSel.value || "";
+
+  setVal("studentBirth", student?.birth || "");
+  setVal("studentStreet", student?.street || "");
+  setVal("studentPLZ", student?.plz || "");
+  setVal("studentPhone", student?.phone || "");
+  setVal("studentEmail", student?.email || "");
+
+  setChk("studentH1", student?.h1);
+  setChk("studentH2", student?.h2);
+
+  setVal("studentPayment", (student?.payment ?? 0));
+}
+
+  safeExpose("openStudentModal", (typeof openStudentModal === "function") ? openStudentModal : null);
+  safeExpose("closeStudentModal", (typeof closeStudentModal === "function") ? closeStudentModal : null);
+  safeExpose("saveStudent", (typeof saveStudent === "function") ? saveStudent : null);
+
+  safeExpose("openTeacherModal", (typeof openTeacherModal === "function") ? openTeacherModal : null);
+  safeExpose("closeTeacherModal", (typeof closeTeacherModal === "function") ? closeTeacherModal : null);
+  safeExpose("saveTeacher", (typeof saveTeacher === "function") ? saveTeacher : null);
+
+  safeExpose("deleteFinance", (typeof deleteFinance === "function") ? deleteFinance : null);
+  safeExpose("printCurrentSection", (typeof printCurrentSection === "function") ? printCurrentSection : null);
+  safeExpose("showSection", (typeof showSection === "function") ? showSection : null);
+
+  safeExpose("addClass", (typeof addClass === "function") ? addClass : null);
+  safeExpose("deleteClass", (typeof deleteClass === "function") ? deleteClass : null);
+  safeExpose("showStudentsOfClass", (typeof showStudentsOfClass === "function") ? showStudentsOfClass : null);
+})();
+
+  </script>
+</body>
+</html>
