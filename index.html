@@ -49,12 +49,7 @@
     /* DASHBOARD */
     .dashboard { display:none; min-height:100vh; }
     .header { background:#2e7d32; color:#fff; padding:20px 60px; display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #1b5e20; gap:18px; flex-wrap:wrap; }
-    .logo img {
-  height: 56px !important;
-  max-width: 160px !important;
-  width: auto !important;
-  object-fit: contain !important;
-}
+
 
     .nav { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
     .nav button { background:transparent; border:none; color:#fff; font-size:20px; padding:10px 15px; border-radius:6px; transition:.2s; }
@@ -145,12 +140,7 @@ input[type="checkbox"]:checked{
   .nav button{ font-size: 16px; padding: 8px 10px; }
   table thead th{ top: 78px; }   /* sticky offset kleiner */
 }
-@media (max-width: 768px) {
-  .logo img {
-    height: 44px;
-    max-width: 130px;
-  }
-}
+
 
 @media (max-width: 600px){
   .header{ padding: 12px 12px; }
@@ -185,7 +175,9 @@ input[type="checkbox"]:checked{
   <!-- DASHBOARD -->
   <div class="dashboard">
     <div class="header">
-      <img src="Ahlen.jpg">
+<div class="logo">
+  <img src="Ahlen.jpg" alt="Logo" style="height:56px; max-width:160px;">
+</div>
 
 
       <div class="nav">
