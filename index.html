@@ -50,10 +50,12 @@
     .dashboard { display:none; min-height:100vh; }
     .header { background:#2e7d32; color:#fff; padding:20px 60px; display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #1b5e20; gap:18px; flex-wrap:wrap; }
     .logo img {
-      height: 56px;
-      max-width: 160px;
-      object-fit: contain;
-      }
+  height: 56px !important;
+  max-width: 160px !important;
+  width: auto !important;
+  object-fit: contain !important;
+}
+
     .nav { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
     .nav button { background:transparent; border:none; color:#fff; font-size:20px; padding:10px 15px; border-radius:6px; transition:.2s; }
     .nav button:hover { background:#1b5e20; }
